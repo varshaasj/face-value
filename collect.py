@@ -9,9 +9,9 @@ CITIES = ["Chicago", "New York", "Los Angeles", "Austin", "Nashville"]
 conn = sqlite3.connect("facevalue.db")
 conn.execute("""CREATE TABLE IF NOT EXISTS snapshots (
     captured_at TEXT, event_id INTEGER, event_name TEXT, performer TEXT,
-    venue TEXT, city TEXT, event_datetime TEXT, days_to_event REAL,
-    lowest_price REAL, average_price REAL, highest_price REAL,
-    listing_count INTEGER, visible_listing_count INTEGER)""")
+    venue TEXT, city TEXT, capacity INTEGER, event_datetime TEXT,
+    days_to_event REAL, announce_date TEXT, popularity REAL, score REAL,
+    is_open INTEGER, status TEXT)""")
 
 now = datetime.now(timezone.utc)
 total = 0
@@ -34,11 +34,11 @@ for city in CITIES:
                 - now).total_seconds() / 86400 if dt else None
         rows.append((now.isoformat(), e["id"], e.get("title"),
                      p[0]["name"] if p else None, v.get("name"), v.get("city"),
-                     dt, days, s.get("lowest_price"), s.get("average_price"),
-                     s.get("highest_price"), s.get("listing_count"),
-                     s.get("visible_listings_count")))
+                     v.get("capacity"), dt, days, e.get("announce_date"),
+                     e.get("popularity"), e.get("score"),
+                     1 if e.get("is_open") else 0, e.get("status")))
 
-    conn.executemany("INSERT INTO snapshots VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+    conn.executemany("INSERT INTO snapshots VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
     conn.commit()
     print(f"{city}: {len(rows)}")
     total += len(rows)
