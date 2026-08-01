@@ -1,0 +1,34 @@
+import heapq
+
+
+class Engine:
+    def __init__(self):
+        self.clock = 0.0
+        self.events = []     # heap of (timestamp, seq, callback)
+        self.seq = 0
+
+    def schedule(self, delay, callback):
+        """Put a callback on the queue, `delay` from now."""
+        timestamp = self.clock + delay
+        heapq.heappush(self.events, (timestamp,self.seq,callback))
+        self.seq = self.seq + 1
+
+    def run(self, until):
+        """Pop the earliest, advance the clock, call it."""
+        while self.events:
+            timestamp, seq, callback = heapq.heappop(self.events)
+
+            if timestamp > until:
+                break
+            self.clock = timestamp
+            callback()
+            
+
+
+
+
+e = Engine()
+e.schedule(3, lambda: print("third", e.clock))
+e.schedule(1, lambda: print("first", e.clock))
+e.schedule(2, lambda: print("second", e.clock))
+e.run(until=10)
