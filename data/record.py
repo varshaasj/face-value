@@ -18,10 +18,13 @@ import sqlite3
 import sys
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 import requests
 
 # ---------------------------------------------------------------- config
+
+ROOT = Path(__file__).resolve().parent.parent
 
 SERIES = [
     "KXRT",                      # Rotten Tomatoes — embargo lift, closes Aug 3
@@ -35,7 +38,7 @@ SERIES = [
 
 INTERVAL = 30                    # seconds between sweeps
 BASE = "https://external-api.kalshi.com/trade-api/v2"
-DB = "books.db"
+DB = str(ROOT / "books.db")
 
 # ---------------------------------------------------------------- schema
 

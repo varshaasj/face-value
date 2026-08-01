@@ -216,3 +216,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 *.db
+
+# Local Claude Code config and private project context
+.claude/
+CLAUDE.md

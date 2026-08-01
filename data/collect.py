@@ -1,12 +1,14 @@
 import os, sqlite3, requests
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
 KEY = os.environ["SEATGEEK_CLIENT_ID"]
 CITIES = ["Chicago", "New York", "Los Angeles", "Austin", "Nashville"]
 
-conn = sqlite3.connect("facevalue.db")
+ROOT = Path(__file__).resolve().parent.parent
+conn = sqlite3.connect(ROOT / "facevalue.db")
 conn.execute("""CREATE TABLE IF NOT EXISTS snapshots (
     captured_at TEXT, event_id INTEGER, event_name TEXT, performer TEXT,
     venue TEXT, city TEXT, capacity INTEGER, event_datetime TEXT,
