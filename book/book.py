@@ -35,15 +35,52 @@ class LimitOrderBook:
 
     def add_limit(self, order) -> list:
         fills = []
-        # TODO: while order.qty > 0 and it crosses the opposite best price:
-        #         take the best opposite price level
-        #         fill against its orders oldest-first
-        #         fill price is the RESTING order's price
-        #         drop exhausted orders, delete the level if empty
+        while order.qty > 0:
+            if order.side == Side.SELL:
+                if self.best_bid() is None or order.price > self.best_bid():
+                    break
+                price = self.best_bid()
+                book = self.bids
+            else:
+                if self.best_ask() is None or order.price < self.best_ask():
+                    break
+                price = self.best_ask()
+                book = self.asks
+
+            fill_order = book[price].popleft()
+            fill_qty = min(order.qty, fill_order.qty)
+
+            order.qty -= fill_qty
+            fill_order.qty -= fill_qty
+
+            fills.append(Fill(
+                price=price,
+                qty=fill_qty,
+                maker_id=fill_order.id,
+                taker_id=order.id,
+                timestamp=order.timestamp,
+            ))
+
+            if fill_order.qty > 0:
+                book[price].appendleft(fill_order)
+            if not book[price]:
+                del book[price]
+
         if order.qty > 0:
             self._rest(order)
         return fills
 
     def cancel(self, order_id) -> bool:
         # TODO: find it, remove from its deque, delete empty level
-        return False
+        deletedOrder = self.orders[order_id]
+        deletedPrice = deletedOrder.price
+        if deletedOrder.side == Side.SELL:
+            self.asks[deletedPrice].remove(deletedOrder)
+            if not self.asks[deletedPrice]:
+                del self.asks[deletedPrice]
+        else:
+            self.bids[deletedPrice].remove(deletedOrder)
+            if not self.bids[deletedPrice]:
+                del self.bids[deletedPrice]
+        del self.orders[order_id]
+        return True
