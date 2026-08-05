@@ -29,10 +29,3 @@ class Engine:
         self.order_id = self.order_id + 1
         return self.order_id 
 
-
-e = Engine()
-e.schedule(3, lambda: print("third", e.clock))
-e.schedule(1, lambda: print("first", e.clock))
-e.schedule(2, lambda: print("second", e.clock))
-e.run(until=10)
-

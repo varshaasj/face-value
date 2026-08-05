@@ -12,47 +12,79 @@
 
 """
 
+import os
+ 
 from numpy.random import default_rng
-from book.book import LimitOrderBook    
+ 
+from book.book import LimitOrderBook
 from sim.world import World
 from sim.engine import Engine
-from sim.agents import NoiseTrader
+from sim.agents import NoiseTrader, InformedTrader
 from plot_run import plot_run
-import os
-os.makedirs("figures", exist_ok=True)
-
-rng = default_rng(0)
-
-world  = World(rng, fair_value=50.0, sigma=0.1, T=1000)
-book   = LimitOrderBook()
-engine = Engine()
-
-traders = [
-    NoiseTrader(engine=engine, book=book, world=world, rng=rng,
-                name="noise_1", rate=1.0, noise=5.0, max_qty=10),
-    NoiseTrader(engine=engine, book=book, world=world, rng=rng,
-                name="noise_2", rate=1.0, noise=5.0, max_qty=10),
-]
-
-history = []
-
-
-def world_tick():
-    world.step()
-    history.append((engine.clock, world.fair_value,
-                    book.best_bid(), book.best_ask()))
-    engine.schedule(1.0, world_tick)
-
-engine.schedule(0.0, world_tick)
-
-for t in traders:
-    engine.schedule(1.0, t.act)
-
-engine.run(until=1000)
-
-print("final fair value:", world.fair_value)
-print("best bid:", book.best_bid())
-print("best ask:", book.best_ask())
-
-
-plot_run(history, [(tr.timestamp, tr.price) for tr in book.trades])
+ 
+ 
+def run_once(seed, n_noise=2, n_informed=1, T=1000):
+    world_rng, agent_rng = default_rng(seed).spawn(2)
+    world = World(world_rng, fair_value=50.0, sigma=0.1, T=T)
+    book = LimitOrderBook()
+    engine = Engine()
+ 
+    noise = [
+        NoiseTrader(engine=engine, book=book, world=world, rng=agent_rng,
+                    name=f"noise_{i+1}", rate=1.0, noise=5.0, max_qty=10)
+        for i in range(n_noise)
+    ]
+ 
+    informed = [
+        InformedTrader(engine=engine, book=book, world=world, rng=agent_rng,
+                       name=f"informed_{i+1}", rate=1.0, threshold=2, qty=10)
+        for i in range(n_informed)
+    ]
+ 
+    history = []
+ 
+    def world_tick():
+        world.step()
+        history.append((engine.clock, world.fair_value,
+                        book.best_bid(), book.best_ask()))
+        engine.schedule(1.0, world_tick)
+ 
+    engine.schedule(0.0, world_tick)
+ 
+    for agent in noise + informed:
+        engine.schedule(1.0, agent.act)
+ 
+    engine.run(until=T)
+ 
+    return {
+        "history": history,
+        "trades": book.trades,
+        "book": book,
+        "world": world,
+        "engine": engine,
+        "noise": noise,
+        "informed": informed,
+    }
+ 
+ 
+if __name__ == "__main__":
+    os.makedirs("figures", exist_ok=True)
+ 
+    r = run_once(seed=0)
+ 
+    total = len(r["trades"])
+    informed_trades = sum(t.n_trades for t in r["informed"])
+ 
+    print("final fair value:", r["world"].fair_value)
+    print("best bid:", r["book"].best_bid())
+    print("best ask:", r["book"].best_ask())
+    print("total trades:", total)
+    print("informed trades:", informed_trades,
+          f"({informed_trades / total:.1%})" if total else "")
+ 
+    plot_run(r["history"],
+             [(tr.timestamp, tr.price) for tr in r["trades"]],
+             out="figures/run_informed.png")
+    a = run_once(seed=0, n_informed=0)
+    b = run_once(seed=0, n_informed=3)
+    print([h[1] for h in a["history"]] == [h[1] for h in b["history"]])

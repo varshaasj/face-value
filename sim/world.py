@@ -31,18 +31,3 @@ class World:
         else:
             event_occurred = 0
         return event_occurred
-        
-
-
-
-w = World(np.random.default_rng(42))
-lo, hi = 100, 0
-for _ in range(10000):
-    w.step()
-    lo, hi = min(lo, w.fair_value), max(hi, w.fair_value)
-print(lo, hi)
-
-
-w = World(np.random.default_rng(1), fair_value=70)
-yes = sum(w.resolve() == 100 for _ in range(10000))
-print(yes / 10000)
