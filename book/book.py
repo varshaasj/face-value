@@ -8,6 +8,7 @@ class LimitOrderBook:
         self.bids = SortedDict()   # price -> deque[Order], ascending keys
         self.asks = SortedDict()   # price -> deque[Order], ascending keys
         self.orders = {}           # order_id -> Order
+        self.trades = []
 
     # ---- reads -------------------------------------------------
 
@@ -53,13 +54,16 @@ class LimitOrderBook:
             order.qty -= fill_qty
             fill_order.qty -= fill_qty
 
-            fills.append(Fill(
+            fill = Fill(
                 price=price,
                 qty=fill_qty,
                 maker_id=fill_order.id,
                 taker_id=order.id,
                 timestamp=order.timestamp,
-            ))
+            )
+            fills.append(fill)
+            self.trades.append(fill)
+
 
             if fill_order.qty > 0:
                 book[price].appendleft(fill_order)

@@ -6,6 +6,7 @@ class Engine:
         self.clock = 0.0
         self.events = []     # heap of (timestamp, seq, callback)
         self.seq = 0
+        self.order_id = 0
 
     def schedule(self, delay, callback):
         """Put a callback on the queue, `delay` from now."""
@@ -22,9 +23,11 @@ class Engine:
                 break
             self.clock = timestamp
             callback()
-            
-
-
+    
+    def next_order_id(self):
+        """Return a unique order id."""
+        self.order_id = self.order_id + 1
+        return self.order_id 
 
 
 e = Engine()
@@ -32,3 +35,4 @@ e.schedule(3, lambda: print("third", e.clock))
 e.schedule(1, lambda: print("first", e.clock))
 e.schedule(2, lambda: print("second", e.clock))
 e.run(until=10)
+
