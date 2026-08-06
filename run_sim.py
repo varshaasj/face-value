@@ -23,7 +23,8 @@ from sim.agents import NoiseTrader, InformedTrader, MarketMaker
 from plot_run import plot_run
  
  
-def run_once(seed, n_noise=2, n_informed=1, mm_config=None, T=1000):
+def run_once(seed, n_noise=2, n_informed=1, mm_config=None, T=1000,
+             informed_threshold=2):
     world_rng, agent_rng = default_rng(seed).spawn(2)
     world = World(world_rng, fair_value=50.0, sigma=0.1, T=T)
     book = LimitOrderBook()
@@ -37,7 +38,7 @@ def run_once(seed, n_noise=2, n_informed=1, mm_config=None, T=1000):
  
     informed = [
         InformedTrader(engine=engine, book=book, world=world, rng=agent_rng,
-                       name=f"informed_{i+1}", rate=1.0, threshold=2, qty=10)
+                       name=f"informed_{i+1}", rate=1.0, threshold=informed_threshold, qty=10)
         for i in range(n_informed)
     ]
 

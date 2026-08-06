@@ -82,8 +82,9 @@ class InformedTrader:
 
 class MarketMaker:
      def __init__(self, name, engine, book, world, rng, rate=1.0,
-                 half_spread=2, qty=10, gamma=0.05, alpha=0.1,
-                 skew=False, risk_spread=False, micro=False, ewma=False):
+                 half_spread=2, qty=10, gamma=0.05, alpha=0.1, ref_noise=2.0,
+                 skew=False, risk_spread=False, micro=False, ewma=False,
+                 oracle=False):
         if risk_spread:
             raise NotImplementedError("risk_spread is not built yet")
 
@@ -110,6 +111,9 @@ class MarketMaker:
         self.inventory_history = []
         self.ref_estimate = None     # EWMA of trade prices
         self.trade_cursor = 0        # how far into book.trades we've read
+        self.ref_noise = ref_noise
+        self.oracle = oracle
+
 
      def _consume_tape(self):
         """Update the EWMA from every trade printed since the last wake-up.
@@ -158,7 +162,9 @@ class MarketMaker:
         bid = self.book.best_bid()
         ask = self.book.best_ask()
 
-        if self.ewma and self.ref_estimate is not None:
+        if self.oracle:
+            ref = self.world.fair_value + self.rng.normal() * self.ref_noise
+        elif self.ewma and self.ref_estimate is not None:
             ref = self.ref_estimate
         elif bid is not None and ask is not None:
             if self.micro:
