@@ -24,9 +24,9 @@ from plot_run import plot_run
  
  
 def run_once(seed, n_noise=2, n_informed=1, mm_config=None, T=1000,
-             informed_threshold=2):
+             informed_threshold=2, sigma=0.1):
     world_rng, agent_rng = default_rng(seed).spawn(2)
-    world = World(world_rng, fair_value=50.0, sigma=0.1, T=T)
+    world = World(world_rng, fair_value=50.0, sigma=sigma, T=T)
     book = LimitOrderBook()
     engine = Engine()
  
