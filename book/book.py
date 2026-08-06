@@ -9,6 +9,7 @@ class LimitOrderBook:
         self.asks = SortedDict()   # price -> deque[Order], ascending keys
         self.orders = {}           # order_id -> Order
         self.trades = []
+        self.fills_by_agent = {}
 
     # ---- reads -------------------------------------------------
 
@@ -63,10 +64,14 @@ class LimitOrderBook:
             )
             fills.append(fill)
             self.trades.append(fill)
+            for who in (fill_order.agent_id, order.agent_id):
+                self.fills_by_agent.setdefault(who, []).append(fill)
 
 
             if fill_order.qty > 0:
                 book[price].appendleft(fill_order)
+            else:
+                del self.orders[fill_order.id]
             if not book[price]:
                 del book[price]
 
@@ -76,6 +81,8 @@ class LimitOrderBook:
 
     def cancel(self, order_id) -> bool:
         # TODO: find it, remove from its deque, delete empty level
+        if order_id not in self.orders:
+            return False
         deletedOrder = self.orders[order_id]
         deletedPrice = deletedOrder.price
         if deletedOrder.side == Side.SELL:
